@@ -27,14 +27,13 @@ public class WsController {
     @PostMapping(path = "/user", consumes = "application/json", produces = "application/json")
     public @ResponseBody Map<Object, Object> cadastrarUser(@RequestBody User user) {
     	Map<Object, Object> resposta = new HashMap<>();    	    	
-    	try {
-    		List<User> lstUsers = userRepository.findByLogin(user.getLogin());
-    		
-    		Optional<String> msgError = this.validateUser(user);
+    	try {    		    		
+    		Optional<String> msgError = this.validarUsuario(user);
     		if (msgError.isPresent()) {
     			resposta.put("status", false);
     			resposta.put("erro", msgError);
-    		}else {    		    		
+    		}else {    	
+    			List<User> lstUsers = userRepository.findByLogin(user.getLogin());
 	    		if (lstUsers.isEmpty()) {
 		    		User newUser = new User(user.getName(), user.getLogin(), user.getPass());
 		        	newUser = userRepository.save(newUser);		        	
@@ -53,6 +52,41 @@ public class WsController {
     	return resposta;
     }
     
+    @PostMapping(path = "/login", consumes = "application/json", produces = "application/json")
+    public @ResponseBody Map<Object, Object> login(@RequestBody User user) {
+    	Map<Object, Object> resposta = new HashMap<>();    	    	
+    	try {    	
+    		String login = user.getLogin();
+    		String pass = user.getPass();
+    		if (login == null || login.isEmpty()){
+    			resposta.put("status", false);
+    			resposta.put("erro","Login Incorreto. ");
+    		}else if (pass == null || pass.isEmpty()) {
+    			resposta.put("status", false);
+    			resposta.put("erro","Senha Incorreta.");
+    		}else {    	
+    			List<User> lstUsers = userRepository.findByLogin(login);
+	    		if (lstUsers.isEmpty()) {		    				        	
+		        	resposta.put("status", false);
+		        	resposta.put("msg", "Login Incorreto. ");        			        	
+	    		}else{
+	    			User userRecorded = lstUsers.get(0);
+	    			if (userRecorded.getPass().equals(pass)) {
+	    				resposta.put("status", true);
+		    			resposta.put("erro", "Confirmado");
+	    			}else {
+	    				resposta.put("status", true);
+		    			resposta.put("erro", "Senha Incorreta");
+	    			}
+	    		}
+    		}
+    	}catch(Exception e) {
+    		resposta.put("status", false);
+    		resposta.put("erro", "Erro ao realizar o login do usuário");
+    	}
+    	return resposta;
+    }
+    
     @GetMapping(path = "/user/{id}", produces = "application/json")
     public @ResponseBody Optional<User> consultarUsuario(@PathVariable("id") String id) {
     	try {
@@ -67,7 +101,7 @@ public class WsController {
     public @ResponseBody Map<Object, Object> atualizarUsuario(@PathVariable("id") String id, @RequestBody User usuarioAtualizado) {
     	Map<Object, Object> resposta = new HashMap<>();    	
     	try {
-    		Optional<String> msgError = this.validateUser(usuarioAtualizado);
+    		Optional<String> msgError = this.validarUsuario(usuarioAtualizado);
     		if (msgError.isPresent()) {
     			resposta.put("status", false);
     			resposta.put("erro", msgError);
@@ -111,7 +145,7 @@ public class WsController {
     	return resposta;
     }
     
-    private Optional<String> validateUser(User user){
+    private Optional<String> validarUsuario(User user){
     	boolean hasError = false;
 		String msgError = "";
 		
