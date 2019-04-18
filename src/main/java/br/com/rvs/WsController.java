@@ -1,6 +1,7 @@
 package br.com.rvs;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -27,13 +28,26 @@ public class WsController {
     public @ResponseBody Map<Object, Object> cadastrarUser(@RequestBody User user) {
     	Map<Object, Object> resposta = new HashMap<>();    	    	
     	try {
-    		User newUser = new User(user.getName(), user.getLogin(), user.getPass());
-        	newUser = userRepository.save(newUser);	
-        	User u = userRepository.save(newUser);
-        	resposta.put("status", true);
-        	resposta.put("msg", "Usuário cadastrado com sucesso!");        	
-        	resposta.put("id", u.getId());
-    	}catch(Exception e) {    		
+    		List<User> lstUsers = userRepository.findByLogin(user.getLogin());
+    		
+    		Optional<String> msgError = this.validateUser(user);
+    		if (msgError.isPresent()) {
+    			resposta.put("status", false);
+    			resposta.put("erro", msgError);
+    		}else {    		    		
+	    		if (lstUsers.isEmpty()) {
+		    		User newUser = new User(user.getName(), user.getLogin(), user.getPass());
+		        	newUser = userRepository.save(newUser);		        	
+		        	resposta.put("status", true);
+		        	resposta.put("msg", "Usuário cadastrado com sucesso!");        	
+		        	resposta.put("id", newUser.getId());
+	    		}else {
+	    			resposta.put("status", false);
+	    			resposta.put("erro", "Usuário já cadastrado");	
+	    		}
+    		}
+    	}catch(Exception e) {
+    		resposta.put("status", false);
     		resposta.put("erro", "Erro ao realizar o cadastrado do usuário");
     	}
     	return resposta;
@@ -53,22 +67,30 @@ public class WsController {
     public @ResponseBody Map<Object, Object> atualizarUsuario(@PathVariable("id") String id, @RequestBody User usuarioAtualizado) {
     	Map<Object, Object> resposta = new HashMap<>();    	
     	try {
-    		Long longId = Long.valueOf(id);
-    		Optional<User> user = userRepository.findById(longId);
-    		if (user.isPresent()) {
-    			user.get().setLogin(usuarioAtualizado.getLogin());
-        		user.get().setName(usuarioAtualizado.getName());
-        		user.get().setPass(usuarioAtualizado.getPass()); 
-        		userRepository.save(user.get());
-        		resposta.put("status", true);
-            	resposta.put("msg", "Usuário atualizado com sucesso!");        	
-            	resposta.put("name", user.get().getName());
-            	resposta.put("login", user.get().getLogin());
-            	resposta.put("pass", user.get().getPass());
+    		Optional<String> msgError = this.validateUser(usuarioAtualizado);
+    		if (msgError.isPresent()) {
+    			resposta.put("status", false);
+    			resposta.put("erro", msgError);
     		}else {    			
-    			resposta.put("erro", "Usuário não encontrado");
-    		}		        	        	        	        	
+	    		Long longId = Long.valueOf(id);
+	    		Optional<User> user = userRepository.findById(longId);
+	    		if (user.isPresent()) {
+	    			user.get().setLogin(usuarioAtualizado.getLogin());
+	        		user.get().setName(usuarioAtualizado.getName());
+	        		user.get().setPass(usuarioAtualizado.getPass()); 
+	        		userRepository.save(user.get());
+	        		resposta.put("status", true);
+	            	resposta.put("msg", "Usuário atualizado com sucesso!");        	
+	            	resposta.put("name", user.get().getName());
+	            	resposta.put("login", user.get().getLogin());
+	            	resposta.put("pass", user.get().getPass());
+	    		}else {
+	    			resposta.put("status", false);
+	    			resposta.put("erro", "Usuário não encontrado");
+	    		}
+    		}
     	}catch(Exception e) {    		
+    		resposta.put("status", false);
     		resposta.put("erro", "Erro ao realizar a atualização dos dados do usuário");
     	}
     	return resposta;       	
@@ -82,10 +104,32 @@ public class WsController {
 			userRepository.deleteById(longId); 
 			resposta.put("status", true);
 			resposta.put("msg", "Usuario " + id + " deletado com sucesso.");			
-    	}catch(Exception e) {    		
+    	}catch(Exception e) {  
+    		resposta.put("status", false);
     		resposta.put("msg", "Erro ao deletar o usuario " + id);
     	} 
     	return resposta;
+    }
+    
+    private Optional<String> validateUser(User user){
+    	boolean hasError = false;
+		String msgError = "";
+    	if (user.getLogin().isEmpty()) {
+			hasError = true;
+			msgError+= "Login inválido. ";
+		}
+		if (user.getName().isEmpty()) {
+			hasError = true;
+			msgError+= "Nome inválido. ";
+		}
+		if (user.getPass().isEmpty()) {
+			hasError = true;
+			msgError+= "Senha inválida.";
+		} 
+		if (hasError) {
+			return Optional.of(msgError);
+		}
+		return null;
     }
 
 }
