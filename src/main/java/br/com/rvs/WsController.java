@@ -114,22 +114,27 @@ public class WsController {
     private Optional<String> validateUser(User user){
     	boolean hasError = false;
 		String msgError = "";
-    	if (user.getLogin().isEmpty()) {
+		
+		String login = user.getLogin();
+    	if (login == null || login.isEmpty()) {
 			hasError = true;
 			msgError+= "Login inválido. ";
 		}
-		if (user.getName().isEmpty()) {
+    	String name = user.getName();
+		if (name == null || name.isEmpty()) {
 			hasError = true;
 			msgError+= "Nome inválido. ";
 		}
-		if (user.getPass().isEmpty()) {
+		String pass = user.getPass();
+		if (pass == null || pass.isEmpty()) {
 			hasError = true;
 			msgError+= "Senha inválida.";
 		} 
+		
 		if (hasError) {
 			return Optional.of(msgError);
 		}
-		return null;
+		return Optional.empty();
     }
 
 }
