@@ -31,7 +31,7 @@ public class WsController {
     		Optional<String> msgError = this.validarUsuario(user);
     		if (msgError.isPresent()) {
     			resposta.put("status", false);
-    			resposta.put("erro", msgError);
+    			resposta.put("msg", msgError);
     		}else {    	
     			List<User> lstUsers = userRepository.findByLogin(user.getLogin());
 	    		if (lstUsers.isEmpty()) {
@@ -42,12 +42,12 @@ public class WsController {
 		        	resposta.put("id", newUser.getId());
 	    		}else {
 	    			resposta.put("status", false);
-	    			resposta.put("erro", "Usuário já cadastrado");	
+	    			resposta.put("msg", "Usuário já cadastrado");	
 	    		}
     		}
     	}catch(Exception e) {
     		resposta.put("status", false);
-    		resposta.put("erro", "Erro ao realizar o cadastrado do usuário");
+    		resposta.put("msg", "Erro ao realizar o cadastrado do usuário");
     	}
     	return resposta;
     }
@@ -60,29 +60,26 @@ public class WsController {
     		String pass = user.getPass();
     		if (login == null || login.isEmpty()){
     			resposta.put("status", false);
-    			resposta.put("erro","Login Incorreto. ");
-    		}else if (pass == null || pass.isEmpty()) {
-    			resposta.put("status", false);
-    			resposta.put("erro","Senha Incorreta.");
+    			resposta.put("msg","Email Incorreto. ");    		
     		}else {    	
     			List<User> lstUsers = userRepository.findByLogin(login);
 	    		if (lstUsers.isEmpty()) {		    				        	
 		        	resposta.put("status", false);
-		        	resposta.put("msg", "Login Incorreto. ");        			        	
+		        	resposta.put("msg", "Email Incorreto. ");        			        	
 	    		}else{
 	    			User userRecorded = lstUsers.get(0);
 	    			if (userRecorded.getPass().equals(pass)) {
 	    				resposta.put("status", true);
-		    			resposta.put("erro", "Confirmado");
+		    			resposta.put("msg", "Confirmado");
 	    			}else {
 	    				resposta.put("status", true);
-		    			resposta.put("erro", "Senha Incorreta");
+		    			resposta.put("msg", "Senha Incorreta");
 	    			}
 	    		}
     		}
     	}catch(Exception e) {
     		resposta.put("status", false);
-    		resposta.put("erro", "Erro ao realizar o login do usuário");
+    		resposta.put("msg", "Erro ao realizar o login do usuário");
     	}
     	return resposta;
     }
@@ -104,7 +101,7 @@ public class WsController {
     		Optional<String> msgError = this.validarUsuario(usuarioAtualizado);
     		if (msgError.isPresent()) {
     			resposta.put("status", false);
-    			resposta.put("erro", msgError);
+    			resposta.put("msg", msgError);
     		}else {    			
 	    		Long longId = Long.valueOf(id);
 	    		Optional<User> user = userRepository.findById(longId);
@@ -120,12 +117,12 @@ public class WsController {
 	            	resposta.put("pass", user.get().getPass());
 	    		}else {
 	    			resposta.put("status", false);
-	    			resposta.put("erro", "Usuário não encontrado");
+	    			resposta.put("msg", "Usuário não encontrado");
 	    		}
     		}
     	}catch(Exception e) {    		
     		resposta.put("status", false);
-    		resposta.put("erro", "Erro ao realizar a atualização dos dados do usuário");
+    		resposta.put("msg", "Erro ao realizar a atualização dos dados do usuário");
     	}
     	return resposta;       	
     }
